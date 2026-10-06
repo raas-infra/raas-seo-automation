@@ -1,0 +1,2 @@
+# Hook scripts must keep LF line endings or sh fails on checkout with core.autocrlf=true.
+* text eol=lf
