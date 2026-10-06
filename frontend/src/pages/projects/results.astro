@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SeoResultsPage from "../../features/SeoResultsPage";
+---
+
+<BaseLayout title="SEO Results">
+  <SeoResultsPage client:only="react">
+    <p slot="fallback" class="page-fallback">Loading…</p>
+  </SeoResultsPage>
+</BaseLayout>
