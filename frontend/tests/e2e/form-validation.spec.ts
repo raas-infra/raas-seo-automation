@@ -45,14 +45,29 @@ for (const badUrl of ["not a url", "localhost", "ftp://x.com", "http://", "examp
   });
 }
 
-// Known bug #1 from the QA report: hostnames with spaces / empty labels are accepted.
-// Remove `test.fail` once validation is fixed — Playwright will flag it when it starts passing.
-for (const badUrl of ["https://exa mple.com", "a..b.com"]) {
+// Regression for bug #1: hostnames with spaces, empty labels or edge hyphens were accepted.
+for (const badUrl of ["https://exa mple.com", "a..b.com", "-bad-.com"]) {
   test(`rejects malformed hostname: "${badUrl}"`, async ({ page }) => {
-    test.fail(true, "Known bug #1: URL validation accepts malformed hostnames");
     await fillProjectForm(page, { ...VALID, websiteUrl: badUrl });
     await submit(page);
-    await expect(urlError(page)).toHaveText("Enter a valid URL, e.g. https://example.com", { timeout: 2_000 });
+    await expect(urlError(page)).toHaveText("Enter a valid URL, e.g. https://example.com");
+    await expect(page).toHaveURL(/\/projects\/new$/);
+  });
+}
+
+// The stricter hostname check must still accept real-world URLs.
+for (const [input, saved] of [
+  ["https://www.example.co.uk/pricing?ref=1", "https://www.example.co.uk/pricing?ref=1"],
+  ["shop.my-brand.io", "https://shop.my-brand.io"],
+  ["HTTP://Example.COM/", "http://example.com"],
+]) {
+  test(`accepts and normalises valid URL: "${input}"`, async ({ page }) => {
+    await fillProjectForm(page, { ...VALID, websiteUrl: input });
+    await submit(page);
+    await expect(page).toHaveURL(/\/projects\/view\?id=p_/);
+    const id = new URL(page.url()).searchParams.get("id");
+    const project = (await readMockState(page)).projects.find((p: { id: string }) => p.id === id);
+    expect(project.websiteUrl).toBe(saved);
   });
 }
 

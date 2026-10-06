@@ -133,23 +133,28 @@ function GapsTable({ rows }: { rows: KeywordGap[] }) {
   );
 }
 
-async function loadResults(projectId: string) {
-  const [project, runs] = await Promise.all([api.getProject(projectId), api.listRuns(projectId)]);
-  const run = runs.find((r) => r.status === "COMPLETED");
-  return { project, results: run ? await api.getResults(run.id) : null };
+async function loadLatestResults(projectId: string) {
+  const run = (await api.listRuns(projectId)).find((r) => r.status === "COMPLETED");
+  return run ? api.getResults(run.id) : null;
 }
 
 function SeoResults({ projectId }: { projectId: string }) {
-  const { data, error } = useApi(() => loadResults(projectId), [projectId]);
+  const { data: project, error: projectError } = useApi(() => api.getProject(projectId), [projectId]);
+  const { data: results, error: resultsError, loading: resultsLoading } = useApi(
+    () => loadLatestResults(projectId),
+    [projectId],
+  );
   const [tab, setTab] = useState(0);
 
   const projectHref = `/projects/view?id=${encodeURIComponent(projectId)}`;
   const back = <Button href={projectHref} color="inherit">Back to project</Button>;
 
-  if (error) return <ErrorState message={error} action={back} />;
-  if (!data) return <LoadingState label="Loading SEO results…" />;
+  // If the project itself failed to load, linking "back" to it would just show another error.
+  if (projectError)
+    return <ErrorState message={projectError} action={<Button href="/projects" color="inherit">Back to projects</Button>} />;
+  if (resultsError) return <ErrorState message={resultsError} action={back} />;
+  if (!project || resultsLoading) return <LoadingState label="Loading SEO results…" />;
 
-  const { project, results } = data;
   const domain = domainOf(project.websiteUrl);
   if (!results) return <ErrorState message="No completed research run yet for this project." action={back} />;
 

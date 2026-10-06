@@ -25,13 +25,24 @@ export const EMPTY_PROJECT_FORM: ProjectFormValues = {
 
 const MIN_DESCRIPTION = 20;
 
+// One DNS label: 1–63 letters/digits/hyphens, not starting or ending with a hyphen.
+const HOST_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+// Top-level domain: letters only, or a punycode TLD (xn--...).
+const TLD = /^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/;
+
+function isValidHostname(hostname: string): boolean {
+  const labels = hostname.split(".");
+  return labels.length >= 2 && labels.every((l) => HOST_LABEL.test(l)) && TLD.test(labels[labels.length - 1]);
+}
+
 /** Adds https:// when missing and returns a normalised URL, or null if invalid. */
 export function normaliseUrl(value: string): string | null {
   const trimmed = value.trim();
-  if (!trimmed) return null;
+  // URL() would percent-encode inner whitespace (e.g. "exa%20mple.com"), so reject it up front.
+  if (!trimmed || /\s/.test(trimmed)) return null;
   try {
     const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
-    if (!url.hostname.includes(".") || url.hostname.endsWith(".")) return null;
+    if (!isValidHostname(url.hostname)) return null;
     return url.toString().replace(/\/$/, "");
   } catch {
     return null;

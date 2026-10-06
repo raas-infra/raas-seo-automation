@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from "react";
+import { useRef, useState, type SubmitEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -25,6 +25,9 @@ function CreateProject() {
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Synchronous guard: `submitting` state only disables the button after a re-render,
+  // so clicks dispatched in the same tick would otherwise all create a project.
+  const submitLock = useRef(false);
 
   const set = (field: keyof ProjectFormValues) => (e: { target: { value: string } }) => {
     const next = { ...values, [field]: e.target.value };
@@ -34,6 +37,7 @@ function CreateProject() {
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
+    if (submitLock.current) return;
     setAttempted(true);
     const found = validateProjectForm(values);
     setErrors(found);
@@ -42,6 +46,7 @@ function CreateProject() {
       document.getElementById(`field-${firstInvalid}`)?.focus();
       return;
     }
+    submitLock.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -49,6 +54,7 @@ function CreateProject() {
       window.location.href = `/projects/view?id=${encodeURIComponent(project.id)}`;
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Could not create the project.");
+      submitLock.current = false;
       setSubmitting(false);
     }
   };

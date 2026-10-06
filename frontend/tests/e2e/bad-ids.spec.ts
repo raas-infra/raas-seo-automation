@@ -40,12 +40,24 @@ test("HTML in the id parameter is shown as text, never executed", async ({ page 
   expect(dialogOpened).toBe(false);
 });
 
-// Known bug #3 from the QA report: "Back to project" points at the same unknown id.
-// Remove `test.fail` once fixed — Playwright will flag it when it starts passing.
-for (const path of ["/projects/run", "/projects/results"]) {
+// Regression for bug #3: "Back to project" used to point at the same unknown id.
+for (const path of PAGES) {
   test(`${path} with an unknown id links back to the projects list`, async ({ page }) => {
-    test.fail(true, "Known bug #3: error link points to the unknown project");
     await page.goto(`${path}?id=does-not-exist`);
-    await expect(page.getByRole("alert").getByRole("link")).toHaveAttribute("href", "/projects", { timeout: 2_000 });
+    const link = page.getByRole("alert").getByRole("link", { name: "Back to projects" });
+    await expect(link).toHaveAttribute("href", "/projects");
+    await link.click();
+    await expect(page).toHaveURL(/\/projects$/);
   });
 }
+
+// An existing project whose research hasn't run should still link back to that project.
+test("errors for an existing project link back to that project", async ({ page }) => {
+  for (const path of ["/projects/run", "/projects/results"]) {
+    await page.goto(`${path}?id=p_demo_dental`);
+    await expect(page.getByRole("alert").getByRole("link", { name: "Back to project" })).toHaveAttribute(
+      "href",
+      "/projects/view?id=p_demo_dental",
+    );
+  }
+});

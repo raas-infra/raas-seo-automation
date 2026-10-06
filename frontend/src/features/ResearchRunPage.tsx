@@ -65,8 +65,10 @@ function ResearchRunView({ projectId }: { projectId: string }) {
   const resultsHref = `/projects/results?id=${encodeURIComponent(projectId)}`;
   const back = <Button href={projectHref} color="inherit">Back to project</Button>;
 
-  const error = projectError ?? runError;
-  if (error) return <ErrorState message={error} action={back} />;
+  // If the project itself failed to load, linking "back" to it would just show another error.
+  if (projectError)
+    return <ErrorState message={projectError} action={<Button href="/projects" color="inherit">Back to projects</Button>} />;
+  if (runError) return <ErrorState message={runError} action={back} />;
   if (!project) return <LoadingState label="Loading research run…" />;
   if (!project.latestRunId)
     return <ErrorState message="Research has not been started for this project yet." action={back} />;

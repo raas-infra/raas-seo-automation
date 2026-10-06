@@ -43,10 +43,8 @@ test("a fast real-mouse triple-click on Create Project creates only one project"
   expect(await countProjects(page, "triple-click-example")).toBe(1);
 });
 
-// Known bug #7: clicks dispatched in the same task all run handleSubmit before React disables
-// the button, creating duplicates. Remove `test.fail` once submit is guarded (e.g. a ref flag).
+// Regression for bug #7: clicks dispatched in the same task used to each create a project.
 test("three instant clicks on Create Project create only one project", async ({ page }) => {
-  test.fail(true, "Known bug #7: Create Project has no re-entrancy guard");
   await fillValidProject(page, "instant-click-example.com");
   await page.getByRole("button", { name: "Create Project" }).evaluate(clickThreeTimesInstantly);
   expect(await countProjects(page, "instant-click-example")).toBe(1);
