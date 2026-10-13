@@ -1,0 +1,21 @@
+#!/bin/sh
+# Runs the frontend type check and Playwright e2e tests before a commit,
+# but only when files under frontend/ are staged.
+# Enable once per clone:  git config core.hooksPath .githooks
+
+if ! git diff --cached --name-only | grep -q '^frontend/'; then
+  exit 0
+fi
+
+echo "pre-commit: frontend changes staged, running type check and e2e tests..."
+
+if [ ! -d frontend/node_modules ]; then
+  echo "pre-commit: frontend/node_modules missing. Run 'npm --prefix frontend install' first." >&2
+  exit 1
+fi
+
+npm --prefix frontend run check || { echo "pre-commit: type check failed, commit aborted." >&2; exit 1; }
+npm --prefix frontend run test:e2e || {
+  echo "pre-commit: e2e tests failed, commit aborted. See 'npm --prefix frontend run test:e2e:report'." >&2
+  exit 1
+}

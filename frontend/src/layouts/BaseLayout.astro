@@ -1,0 +1,86 @@
+---
+// Static page shell: the side navigation is server-rendered MUI with no client JS.
+// Each page mounts one interactive React island (client:only) into <main>.
+import SideNav from "../components/layout/SideNav";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} · SEO Research</title>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <SideNav currentPath={currentPath} />
+      </aside>
+      <main class="content">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  html,
+  body {
+    margin: 0;
+    background: #f6f7f9;
+    color: #111827;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  .shell {
+    display: flex;
+    min-height: 100vh;
+  }
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .content {
+    flex: 1;
+    min-width: 0;
+    padding: 32px 40px 48px;
+    max-width: 1280px;
+  }
+  .page-fallback {
+    color: #5b6474;
+    padding: 48px 0;
+    text-align: center;
+  }
+  @media (max-width: 899px) {
+    .shell {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: auto;
+      height: auto;
+      position: static;
+      border-right: 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .sidebar nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .content {
+      padding: 20px 16px 40px;
+    }
+  }
+</style>

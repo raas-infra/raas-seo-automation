@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DashboardPage from "../features/DashboardPage";
+---
+
+<BaseLayout title="Dashboard">
+  <DashboardPage client:only="react">
+    <p slot="fallback" class="page-fallback">Loading…</p>
+  </DashboardPage>
+</BaseLayout>

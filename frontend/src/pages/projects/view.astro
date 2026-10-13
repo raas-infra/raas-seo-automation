@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProjectDetailsPage from "../../features/ProjectDetailsPage";
+---
+
+<BaseLayout title="Project Details">
+  <ProjectDetailsPage client:only="react">
+    <p slot="fallback" class="page-fallback">Loading…</p>
+  </ProjectDetailsPage>
+</BaseLayout>
