@@ -3,6 +3,7 @@
 import type { ApiClient, CreateProjectInput, Project, ResearchRun } from "../../types/models";
 import { seedState, STEP_LABELS, type MockState } from "../../mocks/projects";
 import { generateResults } from "../../mocks/results";
+import { generateWeeklyPerformance } from "../../mocks/performance";
 
 const STORAGE_KEY = "seo-mock:v1";
 const STEP_MS = 3000; // each of the 4 steps takes 3s → ~12s per run
@@ -138,6 +139,11 @@ export const mockClient: ApiClient = {
     const results = current().results.find((r) => r.runId === runId);
     if (!results) throw new Error("Results are not available for this run yet.");
     return delay(results);
+  },
+
+  async getWeeklyPerformance(projectId) {
+    // Derived on demand and deterministic, so it is deliberately not persisted in localStorage.
+    return delay(generateWeeklyPerformance(findProject(current(), projectId)));
   },
 };
 

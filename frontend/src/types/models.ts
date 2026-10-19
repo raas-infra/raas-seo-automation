@@ -72,6 +72,28 @@ export interface SeoResults {
   summary: string;
 }
 
+export interface TechnicalIssueCounts {
+  critical: number;
+  warning: number;
+  notice: number;
+}
+
+/** One calendar week of (simulated) SEO performance. */
+export interface WeeklyMetrics {
+  weekStart: string; // YYYY-MM-DD, the Monday that starts the week
+  organicClicks: number;
+  impressions: number;
+  avgPosition: number; // lower is better
+  top10Keywords: number;
+  technicalIssues: TechnicalIssueCounts;
+}
+
+export interface WeeklyPerformance {
+  projectId: string;
+  isMock: true;
+  weeks: WeeklyMetrics[]; // oldest first
+}
+
 export interface ApiClient {
   listProjects(): Promise<Project[]>;
   getProject(id: string): Promise<Project>;
@@ -80,4 +102,5 @@ export interface ApiClient {
   startResearch(projectId: string): Promise<ResearchRun>;
   getRun(runId: string): Promise<ResearchRun>;
   getResults(runId: string): Promise<SeoResults>;
+  getWeeklyPerformance(projectId: string): Promise<WeeklyPerformance>;
 }
