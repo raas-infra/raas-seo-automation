@@ -1,12 +1,12 @@
 // Mock ApiClient backed by localStorage. Research runs are simulated from their start time
 // (not timers), so a page refresh mid-run picks up exactly where it left off.
 import type { ApiClient, CreateProjectInput, Project, ResearchRun } from "../../types/models";
-import { seedState, STEP_LABELS, type MockState } from "../../mocks/projects";
+import { generateExecutionDetails } from "../../mocks/execution";
+import { seedState, STEP_LABELS, STEP_MS, type MockState } from "../../mocks/projects";
 import { generateResults } from "../../mocks/results";
 import { generateWeeklyPerformance } from "../../mocks/performance";
 
 const STORAGE_KEY = "seo-mock:v1";
-const STEP_MS = 3000; // each of the 4 steps takes 3s → ~12s per run
 const LATENCY_MS = 350;
 
 let memoryState: MockState | null = null; // fallback when localStorage is unavailable
@@ -144,6 +144,14 @@ export const mockClient: ApiClient = {
   async getWeeklyPerformance(projectId) {
     // Derived on demand and deterministic, so it is deliberately not persisted in localStorage.
     return delay(generateWeeklyPerformance(findProject(current(), projectId)));
+  },
+
+  async getRunDetails(runId) {
+    // Derived from the run's current step statuses; deliberately not persisted either.
+    const state = current();
+    const run = state.runs.find((r) => r.id === runId);
+    if (!run) throw new Error(`Research run "${runId}" not found.`);
+    return delay(generateExecutionDetails(findProject(state, run.projectId), run));
   },
 };
 
