@@ -168,7 +168,12 @@ function SeoResults({ projectId }: { projectId: string }) {
         title="SEO Results"
         subtitle={`${domain} · generated ${formatDate(results.generatedAt)}`}
         breadcrumbs={[{ label: "Projects", href: "/projects" }, { label: domain, href: projectHref }, { label: "SEO Results" }]}
-        actions={<Button variant="outlined" href={projectHref}>Back to project</Button>}
+        actions={
+          <>
+            <Button variant="outlined" href={`/projects/performance?id=${encodeURIComponent(projectId)}`}>Weekly performance</Button>
+            <Button variant="outlined" href={projectHref}>Back to project</Button>
+          </>
+        }
       />
 
       <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>

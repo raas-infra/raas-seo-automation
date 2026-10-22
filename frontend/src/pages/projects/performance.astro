@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import WeeklyPerformancePage from "../../features/WeeklyPerformancePage";
+---
+
+<BaseLayout title="Weekly Performance">
+  <WeeklyPerformancePage client:only="react">
+    <p slot="fallback" class="page-fallback">Loading…</p>
+  </WeeklyPerformancePage>
+</BaseLayout>

@@ -8,6 +8,9 @@ export const STEP_LABELS: Pick<ResearchStep, "key" | "label">[] = [
   { key: "gaps", label: "Find keyword gaps" },
 ];
 
+/** Each research stage takes this long in the simulated run (~12s per run). */
+export const STEP_MS = 3000;
+
 export interface MockState {
   projects: Project[];
   runs: ResearchRun[];

@@ -14,10 +14,11 @@ import AppProviders from "../components/AppProviders";
 import PageHeader from "../components/common/PageHeader";
 import StatusChip from "../components/common/StatusChip";
 import { ErrorState, LoadingState } from "../components/common/StateViews";
+import StepDetailsAccordion from "../components/run/StepDetailsAccordion";
 import { api } from "../lib/api/client";
 import { domainOf, formatDate, queryParam } from "../lib/format";
 import { useApi } from "../lib/useApi";
-import type { ResearchRun, ResearchStep } from "../types/models";
+import type { ResearchRun, ResearchStep, ResearchStepKey, RunExecutionDetails } from "../types/models";
 
 const POLL_MS = 1500;
 
@@ -57,9 +58,46 @@ function useRunPolling(runId: string | undefined) {
   return { run, error };
 }
 
+/**
+ * Loads the simulated execution details. The run stays RUNNING while it moves through all four
+ * stages, so this refetches whenever any stage's status changes (not only the run's status).
+ * Polls that change nothing leave the signature alone and cost nothing. The last good details stay
+ * on screen while refetching, and a failed refetch keeps them and only reports the error.
+ */
+function useRunDetails(run: ResearchRun | null) {
+  const [details, setDetails] = useState<RunExecutionDetails | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const runId = run?.id;
+  const signature = run ? `${run.id}:${run.status}:${run.steps.map((s) => s.status).join(",")}` : "";
+
+  useEffect(() => {
+    if (!runId) return;
+    let cancelled = false;
+    api
+      .getRunDetails(runId)
+      .then((d) => !cancelled && (setDetails(d), setError(null)))
+      .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : String(err)));
+    return () => {
+      cancelled = true;
+    };
+  }, [signature]);
+
+  return { details, error };
+}
+
 function ResearchRunView({ projectId }: { projectId: string }) {
   const { data: project, error: projectError } = useApi(() => api.getProject(projectId), [projectId]);
   const { run, error: runError } = useRunPolling(project?.latestRunId);
+  const { details, error: detailsError } = useRunDetails(run);
+  // Open panels are tracked here (by step key), so polling and detail refreshes never close them.
+  const [expanded, setExpanded] = useState<ReadonlySet<ResearchStepKey>>(new Set());
+  const toggleStep = (key: ResearchStepKey, open: boolean) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(key);
+      else next.delete(key);
+      return next;
+    });
 
   const projectHref = `/projects/view?id=${encodeURIComponent(projectId)}`;
   const resultsHref = `/projects/results?id=${encodeURIComponent(projectId)}`;
@@ -105,15 +143,25 @@ function ResearchRunView({ projectId }: { projectId: string }) {
           sx={{ height: 8, borderRadius: 4, mb: 3 }}
         />
 
-        <Box component="ol" sx={{ listStyle: "none", p: 0, m: 0, display: "grid", gap: 1.75 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <strong>Simulated execution details</strong> — mock data, not from a real crawl or search provider. Expand a stage to see what it did.
+        </Typography>
+        {detailsError && (
+          <Alert severity="warning" role="note" sx={{ mb: 1 }}>
+            Could not load execution details: {detailsError}
+          </Alert>
+        )}
+
+        <Box component="ol" sx={{ listStyle: "none", p: 0, m: 0, display: "grid", gap: 0.25 }}>
           {run.steps.map((step) => (
-            <Box component="li" key={step.key} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 22, display: "flex", justifyContent: "center" }}>
-                <StepIcon status={step.status} />
-              </Box>
-              <Typography sx={{ fontWeight: step.status === "RUNNING" ? 600 : 400, color: step.status === "PENDING" ? "text.secondary" : "text.primary" }}>
-                {step.label}
-              </Typography>
+            <Box component="li" key={step.key}>
+              <StepDetailsAccordion
+                step={step}
+                detail={details?.steps.find((d) => d.key === step.key) ?? null}
+                icon={<StepIcon status={step.status} />}
+                expanded={expanded.has(step.key)}
+                onToggle={toggleStep}
+              />
             </Box>
           ))}
         </Box>

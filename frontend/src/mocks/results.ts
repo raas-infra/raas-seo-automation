@@ -27,7 +27,7 @@ const MODIFIERS: { pattern: (t: string) => string; intent: SearchIntent }[] = [
 ];
 
 /** Small seeded PRNG (mulberry32) so the same project always gets the same results. */
-function rng(seedText: string) {
+export function rng(seedText: string) {
   let seed = 0;
   for (const ch of seedText) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) | 0;
   return () => {

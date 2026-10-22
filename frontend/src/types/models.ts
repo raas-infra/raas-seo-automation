@@ -72,6 +72,56 @@ export interface SeoResults {
   summary: string;
 }
 
+export interface TechnicalIssueCounts {
+  critical: number;
+  warning: number;
+  notice: number;
+}
+
+/** One calendar week of (simulated) SEO performance. */
+export interface WeeklyMetrics {
+  weekStart: string; // YYYY-MM-DD, the Monday that starts the week
+  organicClicks: number;
+  impressions: number;
+  avgPosition: number; // lower is better
+  top10Keywords: number;
+  technicalIssues: TechnicalIssueCounts;
+}
+
+export interface WeeklyPerformance {
+  projectId: string;
+  isMock: true;
+  weeks: WeeklyMetrics[]; // oldest first
+}
+
+export interface ExecutionAction {
+  label: string;
+  state: "done" | "active"; // "active" = currently being performed
+}
+
+export interface ExecutionResult {
+  label: string;
+  value: string;
+}
+
+/** Simulated details for one research stage. Present for every stage; content depends on its status. */
+export interface StepExecutionDetail {
+  key: ResearchStepKey;
+  label: string;
+  status: ResearchStep["status"];
+  actions: ExecutionAction[]; // empty while PENDING
+  results: ExecutionResult[]; // empty until DONE
+  startedAt?: string; // set once the stage has started
+  completedAt?: string; // set once DONE
+  durationMs?: number;
+}
+
+export interface RunExecutionDetails {
+  runId: string;
+  isMock: true;
+  steps: StepExecutionDetail[];
+}
+
 export interface ApiClient {
   listProjects(): Promise<Project[]>;
   getProject(id: string): Promise<Project>;
@@ -80,4 +130,6 @@ export interface ApiClient {
   startResearch(projectId: string): Promise<ResearchRun>;
   getRun(runId: string): Promise<ResearchRun>;
   getResults(runId: string): Promise<SeoResults>;
+  getWeeklyPerformance(projectId: string): Promise<WeeklyPerformance>;
+  getRunDetails(runId: string): Promise<RunExecutionDetails>;
 }
